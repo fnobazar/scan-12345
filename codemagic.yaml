@@ -1,0 +1,17 @@
+
+workflows:
+  default-workflow:
+    name: Auto Fix Workflow
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Build APK Auto Find
+        script: |
+          set -e
+          if [ -f "pubspec.yaml" ]; then DIR="."; else FOUND=$(find . -name "pubspec.yaml" -maxdepth 4 | head -1); DIR=$(dirname "$FOUND"); fi
+          cd $DIR
+          flutter pub get
+          flutter build apk --debug
+    artifacts:
+      - "**/*.apk"

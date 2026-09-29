@@ -1,0 +1,56 @@
+
+name: Build Sca-N APK - Final Auto Fix
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          cache: true
+
+      - name: Find pubspec and Build APK
+        run: |
+          set -e
+          echo "=== Listing root ==="
+          ls -la
+          if [ -f "pubspec.yaml" ]; then
+            DIR="."
+          else
+            FOUND=$(find . -name "pubspec.yaml" -maxdepth 4 | head -1)
+            if [ -z "$FOUND" ]; then
+              echo "pubspec.yaml not found!"
+              find . -maxdepth 4 -type f | head -50
+              exit 1
+            fi
+            DIR=$(dirname "$FOUND")
+          fi
+          echo "Building in $DIR"
+          cd $DIR
+          flutter pub get
+          flutter build apk --debug --no-tree-shake-icons
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sca-N-APK-Final
+          path: |
+            **/build/app/outputs/flutter-apk/*.apk
+            **/*.apk
+          if-no-files-found: error
